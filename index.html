@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>6-Glass Pyramid Challenge - Touch &amp; Pull Edition</title>
+  <title>6-Glass Pyramid Challenge - Multi-Level Edition</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
@@ -77,56 +77,59 @@
   <!-- TOP HUD -->
   <header class="w-full max-w-4xl flex items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl glass-panel z-10 shrink-0">
     <div class="flex items-center gap-2 sm:gap-3">
-      <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-red-600 via-rose-600 to-amber-500 flex items-center justify-center shadow-lg shadow-red-600/40 text-lg sm:text-xl font-black">
-        🎪
-      </div>
+      <!-- Level Quick-Select Button -->
+      <button id="levelSelectBtn" title="Choose Level" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-red-600 via-rose-600 to-amber-500 flex flex-col items-center justify-center shadow-lg shadow-red-600/40 border border-amber-400/40 btn-bounce">
+        <span class="text-[9px] font-black uppercase text-amber-200 leading-none">LVL</span>
+        <span id="headerLevelNum" class="text-sm sm:text-base font-black text-white leading-none">1</span>
+      </button>
+
       <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-base sm:text-xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-rose-300 to-amber-400 carnival-title leading-tight">
-            6-Glass Pyramid
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <h1 id="levelTitleText" class="text-xs sm:text-base font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-rose-300 to-amber-400 carnival-title leading-tight">
+            Rookie Booth
           </h1>
-          <span class="px-2 py-0.5 text-[9px] font-black rounded-md bg-red-700/80 text-white uppercase tracking-wider border border-red-500/50 shadow-sm">
-            PRO MODE
+          <span id="levelBadge" class="px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[9px] font-black rounded-md bg-emerald-700/80 text-white uppercase tracking-wider border border-emerald-500/50 shadow-sm">
+            EASY
           </span>
         </div>
-        <p class="text-[10px] sm:text-[11px] text-amber-200/80 font-semibold hidden xs:block sm:block">
-          Touch &amp; pull backward to aim &bull; Release to throw
+        <p class="text-[10px] text-amber-200/80 font-semibold hidden xs:block sm:block">
+          Pull back like a slingshot &bull; Release to launch
         </p>
       </div>
     </div>
 
-    <!-- Stats & Wind Indicator -->
-    <div class="flex items-center gap-2 sm:gap-4">
-      <!-- Live Crosswind HUD Gauge -->
-      <div class="flex flex-col items-center px-2 py-1 bg-black/60 rounded-xl border border-sky-500/30 min-w-[70px] sm:min-w-[90px]">
-        <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-sky-300 font-bold flex items-center gap-1">
+    <!-- Stats, Wind, and Buttons -->
+    <div class="flex items-center gap-1.5 sm:gap-3">
+      <!-- Live Crosswind Indicator -->
+      <div class="flex flex-col items-center px-1.5 sm:px-2.5 py-1 bg-black/60 rounded-xl border border-sky-500/30 min-w-[62px] sm:min-w-[85px]">
+        <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-sky-300 font-bold flex items-center gap-0.5 sm:gap-1">
           <span class="wind-anim">💨</span> WIND
         </span>
-        <span id="windDisplay" class="text-xs sm:text-sm font-black text-sky-300 tracking-tight">0.0 MPH</span>
+        <span id="windDisplay" class="text-[11px] sm:text-xs font-black text-sky-300 tracking-tight">0.0 MPH</span>
       </div>
 
       <!-- Remaining Balls Indicator -->
       <div class="flex flex-col items-center">
-        <span class="text-[9px] sm:text-[10px] uppercase tracking-wider text-amber-300 font-bold mb-0.5">Balls</span>
-        <div id="ballsContainer" class="flex items-center gap-1.5 sm:gap-2">
-          <span class="ball-dot w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-red-400 via-red-600 to-red-950 border-2 border-white/80 shadow-md shadow-red-950/80 transition-all duration-300"></span>
-          <span class="ball-dot w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-red-400 via-red-600 to-red-950 border-2 border-white/80 shadow-md shadow-red-950/80 transition-all duration-300"></span>
-          <span class="ball-dot w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-red-400 via-red-600 to-red-950 border-2 border-white/80 shadow-md shadow-red-950/80 transition-all duration-300"></span>
+        <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-amber-300 font-bold mb-0.5">Balls</span>
+        <div id="ballsContainer" class="flex items-center gap-1 sm:gap-1.5">
+          <span class="ball-dot w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-red-400 via-red-600 to-red-950 border-2 border-white/80 shadow-md transition-all duration-300"></span>
+          <span class="ball-dot w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-red-400 via-red-600 to-red-950 border-2 border-white/80 shadow-md transition-all duration-300"></span>
+          <span class="ball-dot w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-red-400 via-red-600 to-red-950 border-2 border-white/80 shadow-md transition-all duration-300"></span>
         </div>
       </div>
 
       <!-- Score Box -->
-      <div class="flex flex-col items-center px-2.5 sm:px-3 py-1 bg-black/60 rounded-xl border border-amber-500/30 min-w-[65px] sm:min-w-[85px]">
+      <div class="flex flex-col items-center px-2 sm:px-2.5 py-1 bg-black/60 rounded-xl border border-amber-500/30 min-w-[55px] sm:min-w-[70px]">
         <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-amber-300 font-bold">Cleared</span>
-        <span id="scoreText" class="text-base sm:text-lg font-black text-amber-400">0 <span class="text-white/60 text-xs sm:text-sm">/ 6</span></span>
+        <span id="scoreText" class="text-sm sm:text-base font-black text-amber-400">0 <span class="text-white/60 text-[10px] sm:text-xs">/ 6</span></span>
       </div>
 
-      <!-- Audio & Restart Buttons -->
+      <!-- Quick Action Controls -->
       <div class="flex items-center gap-1">
-        <button id="soundToggleBtn" title="Toggle Sound" class="w-9 h-9 rounded-xl bg-amber-950/70 active:bg-amber-800 text-amber-300 border border-amber-500/30 flex items-center justify-center transition-all text-base p-1">
+        <button id="soundToggleBtn" title="Toggle Sound" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-950/70 active:bg-amber-800 text-amber-300 border border-amber-500/30 flex items-center justify-center transition-all text-xs sm:text-sm">
           🔊
         </button>
-        <button id="restartBtn" title="Restart Game" class="w-9 h-9 rounded-xl bg-red-950/70 active:bg-red-800 text-red-200 border border-red-500/30 flex items-center justify-center transition-all text-base font-bold p-1">
+        <button id="restartBtn" title="Restart Level" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-red-950/70 active:bg-red-800 text-red-200 border border-red-500/30 flex items-center justify-center transition-all text-sm font-bold">
           ↺
         </button>
       </div>
@@ -144,7 +147,7 @@
     </div>
 
     <!-- Status Toast Notification -->
-    <div id="statusToast" class="absolute top-3 pointer-events-none px-3.5 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-neutral-950 font-black text-xs sm:text-sm shadow-2xl tracking-wide opacity-0 transform -translate-y-2 transition-all duration-300 max-w-[90%] text-center">
+    <div id="statusToast" class="absolute top-3 pointer-events-none px-3.5 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-neutral-950 font-black text-xs sm:text-sm shadow-2xl tracking-wide opacity-0 transform -translate-y-2 transition-all duration-300 max-w-[90%] text-center z-20">
       Touch &amp; pull backward to aim &amp; release to throw!
     </div>
 
@@ -156,8 +159,8 @@
     </div>
   </main>
 
-  <!-- BOTTOM CONTROLS & HUD (Streamlined without Angle / Power numbers) -->
-  <footer class="w-full max-w-4xl mt-1 px-3 sm:px-4 py-2.5 rounded-2xl glass-panel flex items-center justify-between gap-3 z-10 shrink-0">
+  <!-- BOTTOM CONTROLS & HUD -->
+  <footer class="w-full max-w-4xl mt-1 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl glass-panel flex items-center justify-between gap-3 z-10 shrink-0">
     <div class="w-full flex items-center gap-3">
       <div class="flex items-center gap-1.5 text-xs font-bold text-amber-300 shrink-0">
         <span>🏆</span>
@@ -170,7 +173,27 @@
     </div>
   </footer>
 
-  <!-- RESULTS POPUP MODAL -->
+  <!-- LEVEL SELECT MODAL -->
+  <div id="levelSelectModal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden transition-opacity duration-300">
+    <div class="relative w-full max-w-md bg-gradient-to-b from-neutral-900 to-neutral-950 p-6 rounded-3xl border-2 border-amber-500/50 shadow-2xl flex flex-col items-center">
+      <div class="w-full flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🎪</span>
+          <h2 class="text-xl font-black text-amber-300 carnival-title">Select Level</h2>
+        </div>
+        <button id="closeLevelModalBtn" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 font-bold flex items-center justify-center">
+          ✕
+        </button>
+      </div>
+
+      <!-- Level Cards Grid -->
+      <div id="levelListGrid" class="w-full flex flex-col gap-2.5 max-h-[60vh] overflow-y-auto pr-1">
+        <!-- Dynamically injected level cards -->
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS & LEVEL ADVANCEMENT MODAL -->
   <div id="resultModal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden transition-opacity duration-300">
     <div class="relative w-full max-w-sm bg-gradient-to-b from-neutral-900 to-neutral-950 p-6 rounded-3xl border-2 border-red-500/70 shadow-2xl text-center flex flex-col items-center">
       <div id="modalTrophyIcon" class="text-6xl mb-2 animate-bounce">🎪</div>
@@ -192,9 +215,14 @@
         </div>
       </div>
 
-      <button id="modalPlayAgainBtn" class="w-full py-3 bg-gradient-to-r from-amber-500 via-rose-600 to-red-600 hover:from-amber-400 hover:to-red-500 text-white font-black text-base rounded-2xl shadow-xl shadow-red-700/50 btn-bounce border border-white/20">
-        TRY AGAIN
-      </button>
+      <div class="w-full flex flex-col gap-2">
+        <button id="modalActionBtn" class="w-full py-3 bg-gradient-to-r from-amber-500 via-rose-600 to-red-600 hover:from-amber-400 hover:to-red-500 text-white font-black text-base rounded-2xl shadow-xl shadow-red-700/50 btn-bounce border border-white/20">
+          TRY AGAIN
+        </button>
+        <button id="modalChangeLevelBtn" class="w-full py-2 bg-white/10 hover:bg-white/15 text-amber-200 font-bold text-xs rounded-xl border border-amber-500/30">
+          CHOOSE ANOTHER LEVEL
+        </button>
+      </div>
     </div>
   </div>
 
@@ -257,7 +285,7 @@
         if (this.muted || !this.ctx) return;
         const now = this.ctx.currentTime;
         
-        // Deep thud
+        // Deep sub-thud
         const subOsc = this.ctx.createOscillator();
         const subGain = this.ctx.createGain();
         subOsc.type = 'sine';
@@ -392,6 +420,74 @@
 
     const sound = new SoundFX();
 
+    const GAME_LEVELS = [
+      {
+        id: 1,
+        name: "Rookie Booth",
+        difficulty: "EASY",
+        badgeColor: "bg-emerald-700/80 border-emerald-500/50 text-white",
+        desc: "Calm breeze, standard glassware, wide table.",
+        windMax: 2.0,
+        glassMass: 1.6,
+        surfaceFriction: 0.965,
+        tableWidthScale: 1.08,
+        minScoreToPass: 4,
+        balls: 3
+      },
+      {
+        id: 2,
+        name: "Gusty Boardwalk",
+        difficulty: "MEDIUM",
+        badgeColor: "bg-sky-700/80 border-sky-500/50 text-white",
+        desc: "Moderate seaside crosswinds require subtle aiming counter-steer.",
+        windMax: 4.2,
+        glassMass: 1.85,
+        surfaceFriction: 0.965,
+        tableWidthScale: 1.0,
+        minScoreToPass: 5,
+        balls: 3
+      },
+      {
+        id: 3,
+        name: "Midnight Carnival",
+        difficulty: "HARD",
+        badgeColor: "bg-amber-700/80 border-amber-500/50 text-white",
+        desc: "Dense commercial tumblers, stronger gusts, narrower back lip.",
+        windMax: 6.0,
+        glassMass: 2.1,
+        surfaceFriction: 0.958,
+        tableWidthScale: 0.94,
+        minScoreToPass: 6,
+        balls: 3
+      },
+      {
+        id: 4,
+        name: "High Roller's Tent",
+        difficulty: "EXPERT",
+        badgeColor: "bg-purple-700/80 border-purple-500/50 text-white",
+        desc: "Heavy lead-crystal glasses and shifting Atlantic crosswinds.",
+        windMax: 8.0,
+        glassMass: 2.4,
+        surfaceFriction: 0.952,
+        tableWidthScale: 0.88,
+        minScoreToPass: 6,
+        balls: 3
+      },
+      {
+        id: 5,
+        name: "Master of the Fair",
+        difficulty: "MASTER",
+        badgeColor: "bg-red-800/80 border-red-500/50 text-white",
+        desc: "Tempest winds, ultra-heavy glassware, and a narrow table ledge!",
+        windMax: 10.5,
+        glassMass: 2.7,
+        surfaceFriction: 0.945,
+        tableWidthScale: 0.82,
+        minScoreToPass: 6,
+        balls: 3
+      }
+    ];
+
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -410,6 +506,14 @@
     window.addEventListener('resize', resizeCanvas);
 
     // DOM Elements
+    const headerLevelNum = document.getElementById('headerLevelNum');
+    const levelTitleText = document.getElementById('levelTitleText');
+    const levelBadge = document.getElementById('levelBadge');
+    const levelSelectBtn = document.getElementById('levelSelectBtn');
+    const levelSelectModal = document.getElementById('levelSelectModal');
+    const closeLevelModalBtn = document.getElementById('closeLevelModalBtn');
+    const levelListGrid = document.getElementById('levelListGrid');
+
     const scoreText = document.getElementById('scoreText');
     const ballsContainer = document.getElementById('ballsContainer');
     const progressBar = document.getElementById('progressBar');
@@ -428,10 +532,11 @@
     const modalGlassesScore = document.getElementById('modalGlassesScore');
     const modalBallsUsed = document.getElementById('modalBallsUsed');
     const starsDisplay = document.getElementById('starsDisplay');
-    const modalPlayAgainBtn = document.getElementById('modalPlayAgainBtn');
+    const modalActionBtn = document.getElementById('modalActionBtn');
+    const modalChangeLevelBtn = document.getElementById('modalChangeLevelBtn');
 
-    // Deep table geometry
-    const TABLE = {
+    // Base table geometry
+    const BASE_TABLE = {
       surfaceY: 312,
       frontLipY: 330,
       leftX: 260,
@@ -442,6 +547,24 @@
       floorY: 485,
       skirtHeight: 18,
     };
+
+    // Active level table bounds
+    let TABLE = { ...BASE_TABLE };
+
+    function configureTableForLevel(lvl) {
+      const scale = lvl.tableWidthScale || 1.0;
+      const centerX = V_WIDTH / 2;
+      const halfFrontW = ((BASE_TABLE.rightX - BASE_TABLE.leftX) / 2) * scale;
+      const halfBackW = ((BASE_TABLE.depthRightX - BASE_TABLE.depthLeftX) / 2) * scale;
+
+      TABLE = {
+        ...BASE_TABLE,
+        leftX: centerX - halfFrontW,
+        rightX: centerX + halfFrontW,
+        depthLeftX: centerX - halfBackW,
+        depthRightX: centerX + halfBackW
+      };
+    }
 
     function isInsideTabletop(px, py) {
       if (py < TABLE.depthTopY || py > TABLE.surfaceY) return false;
@@ -708,7 +831,7 @@
     }
 
     class InvertedGlass {
-      constructor(id, tier, indexInTier, x, y, width, height, supports = []) {
+      constructor(id, tier, indexInTier, x, y, width, height, supports = [], mass = 1.95, friction = 0.965) {
         this.id = id;
         this.tier = tier;
         this.indexInTier = indexInTier;
@@ -736,7 +859,8 @@
 
         this.rimWidth = width * 1.05;
         this.baseWidth = width * 0.74;
-        this.mass = 1.95;
+        this.mass = mass;
+        this.friction = friction;
       }
 
       reset() {
@@ -810,7 +934,7 @@
         const GRAVITY = 1180;
         this.vy += GRAVITY * dt;
 
-        this.vx *= 0.965;
+        this.vx *= this.friction;
         this.vy *= 0.985;
         this.vAngle *= 0.96;
 
@@ -1133,6 +1257,9 @@
 
     class GameController {
       constructor() {
+        this.currentLevelIndex = 0;
+        this.unlockedLevels = 1;
+
         this.glasses = [];
         this.ball = new ProjectileBall();
         this.hand = new PlayerThrowingHand();
@@ -1159,27 +1286,51 @@
         this.throwPower = 0;
 
         this.lastTimestamp = performance.now();
-        this.rollNewWind();
-        this.initPyramidStack();
+
+        this.loadLevel(0);
         this.bindEvents();
-        this.syncHUD();
+        this.renderLevelSelectorModal();
+      }
+
+      getCurrentLevel() {
+        return GAME_LEVELS[this.currentLevelIndex];
+      }
+
+      loadLevel(index) {
+        this.currentLevelIndex = Math.max(0, Math.min(index, GAME_LEVELS.length - 1));
+        const lvl = this.getCurrentLevel();
+
+        configureTableForLevel(lvl);
+
+        // Update Level HUD UI
+        headerLevelNum.textContent = lvl.id;
+        levelTitleText.textContent = lvl.name;
+        levelBadge.textContent = lvl.difficulty;
+        levelBadge.className = `px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[9px] font-black rounded-md uppercase tracking-wider border shadow-sm ${lvl.badgeColor}`;
+
+        this.ballsRemaining = lvl.balls;
+        this.reset();
+        this.showToast(`Level ${lvl.id}: ${lvl.name}!`, 2000);
       }
 
       rollNewWind() {
-        const gust = (Math.random() * 9.0 - 4.5);
+        const lvl = this.getCurrentLevel();
+        const maxW = lvl.windMax || 3.0;
+        const gust = (Math.random() * (maxW * 2) - maxW);
         this.crosswind = Math.round(gust * 10) / 10;
         this.updateWindUI();
       }
 
       updateWindUI() {
         if (!windDisplay) return;
-        const dir = this.crosswind > 0.2 ? '▶ EAST' : (this.crosswind < -0.2 ? '◀ WEST' : 'CALM');
+        const dir = this.crosswind > 0.2 ? '▶ E' : (this.crosswind < -0.2 ? '◀ W' : 'CALM');
         const absVal = Math.abs(this.crosswind).toFixed(1);
         windDisplay.innerHTML = `${absVal} <span class="text-[9px] text-sky-400 font-bold">${dir}</span>`;
       }
 
       initPyramidStack() {
         this.glasses = [];
+        const lvl = this.getCurrentLevel();
         const centerX = V_WIDTH / 2;
 
         const gWidth = 48;
@@ -1197,17 +1348,17 @@
         const row0Left = centerX - spacingX;
         for (let i = 0; i < 3; i++) {
           this.glasses.push(
-            new InvertedGlass(id++, 0, i, row0Left + (i * spacingX), tier0Y, gWidth, gHeight, [])
+            new InvertedGlass(id++, 0, i, row0Left + (i * spacingX), tier0Y, gWidth, gHeight, [], lvl.glassMass, lvl.surfaceFriction)
           );
         }
 
         // Tier 1 (Middle 2 glasses)
         const row1Left = centerX - (spacingX * 0.5);
-        this.glasses.push(new InvertedGlass(id++, 1, 0, row1Left, tier1Y, gWidth, gHeight, [0, 1]));
-        this.glasses.push(new InvertedGlass(id++, 1, 1, row1Left + spacingX, tier1Y, gWidth, gHeight, [1, 2]));
+        this.glasses.push(new InvertedGlass(id++, 1, 0, row1Left, tier1Y, gWidth, gHeight, [0, 1], lvl.glassMass, lvl.surfaceFriction));
+        this.glasses.push(new InvertedGlass(id++, 1, 1, row1Left + spacingX, tier1Y, gWidth, gHeight, [1, 2], lvl.glassMass, lvl.surfaceFriction));
 
         // Tier 2 (Top 1 glass)
-        this.glasses.push(new InvertedGlass(id++, 2, 0, centerX, tier2Y, gWidth, gHeight, [3, 4]));
+        this.glasses.push(new InvertedGlass(id++, 2, 0, centerX, tier2Y, gWidth, gHeight, [3, 4], lvl.glassMass, lvl.surfaceFriction));
       }
 
       spawnBurst(x, y, count = 10, color = '#bae6fd', isShards = false, speedMult = 1.0) {
@@ -1335,7 +1486,7 @@
           }
         }
 
-        // Scoring: Must be off the table
+        // Scoring: Must fall off the table
         let scoredThisFrame = false;
         for (let g of this.glasses) {
           if (!g.scored && g.isOffTable) {
@@ -1363,7 +1514,7 @@
 
       checkThrowTurnEnd() {
         if (!this.ball.hasHitAny && this.score < 6) {
-          this.showToast('Missed target! Watch crosswind drift.', 1700);
+          this.showToast('Missed target! Counter the wind drift.', 1700);
         } else {
           const onTableKnocked = this.glasses.filter(g => g.isKnocked && !g.isOffTable).length;
           if (onTableKnocked > 0 && this.score < 6) {
@@ -1379,7 +1530,9 @@
         }
 
         if (this.ballsRemaining <= 0) {
-          setTimeout(() => this.finishGame(false), 900);
+          const lvl = this.getCurrentLevel();
+          const passed = this.score >= lvl.minScoreToPass;
+          setTimeout(() => this.finishGame(passed), 900);
         }
       }
 
@@ -1387,34 +1540,58 @@
         if (this.isGameOver) return;
         this.isGameOver = true;
 
-        modalGlassesScore.textContent = `${this.score} / 6`;
-        modalBallsUsed.textContent = `${this.totalThrowsUsed} / 3`;
+        const lvl = this.getCurrentLevel();
+        const hasNextLevel = this.currentLevelIndex < GAME_LEVELS.length - 1;
 
-        if (this.score === 6) {
-          modalTitle.textContent = 'Carnival Master!';
-          modalSubtitle.textContent = 'Pure hand precision! You cleared every heavy glass!';
-          modalTrophyIcon.textContent = '🏆';
-          starsDisplay.innerHTML = '<span>⭐</span><span>⭐</span><span>⭐</span>';
+        modalGlassesScore.textContent = `${this.score} / 6`;
+        modalBallsUsed.textContent = `${this.totalThrowsUsed} / ${lvl.balls}`;
+
+        if (victory) {
+          if (hasNextLevel) {
+            this.unlockedLevels = Math.max(this.unlockedLevels, this.currentLevelIndex + 2);
+            this.renderLevelSelectorModal();
+          }
+
+          if (this.score === 6) {
+            modalTitle.textContent = 'Level Mastered!';
+            modalSubtitle.textContent = `Clean sweep on ${lvl.name}! Every tumbler cleared!`;
+            modalTrophyIcon.textContent = '🏆';
+            starsDisplay.innerHTML = '<span>⭐</span><span>⭐</span><span>⭐</span>';
+          } else {
+            modalTitle.textContent = 'Level Completed!';
+            modalSubtitle.textContent = `Target achieved on ${lvl.name} (${this.score}/${lvl.minScoreToPass} needed)!`;
+            modalTrophyIcon.textContent = '🎯';
+            starsDisplay.innerHTML = '<span>⭐</span><span>⭐</span><span class="opacity-30">⭐</span>';
+          }
+
           sound.playVictory();
           this.spawnConfetti();
-        } else if (this.score >= 4) {
-          modalTitle.textContent = 'Sharpshooter!';
-          modalSubtitle.textContent = 'Superb throwing arm against tricky fairground odds!';
-          modalTrophyIcon.textContent = '🎯';
-          starsDisplay.innerHTML = '<span>⭐</span><span>⭐</span><span class="opacity-30">⭐</span>';
-          sound.playVictory();
-        } else if (this.score >= 2) {
-          modalTitle.textContent = 'Tough Break!';
-          modalSubtitle.textContent = 'Carnival tumblers are dense! Throw with high power!';
-          modalTrophyIcon.textContent = '🎪';
-          starsDisplay.innerHTML = '<span>⭐</span><span class="opacity-30">⭐</span><span class="opacity-30">⭐</span>';
-          sound.playGameOver();
+
+          if (hasNextLevel) {
+            modalActionBtn.textContent = 'NEXT LEVEL ❯';
+            modalActionBtn.onclick = () => {
+              resultModal.classList.add('hidden');
+              this.loadLevel(this.currentLevelIndex + 1);
+            };
+          } else {
+            modalActionBtn.textContent = 'PLAY CAMPAIGN AGAIN';
+            modalActionBtn.onclick = () => {
+              resultModal.classList.add('hidden');
+              this.loadLevel(0);
+            };
+          }
         } else {
           modalTitle.textContent = 'Booth Wins!';
-          modalSubtitle.textContent = 'The wind and heavy tumblers defeated you. Try again!';
-          modalTrophyIcon.textContent = '🃏';
+          modalSubtitle.textContent = `Needed at least ${lvl.minScoreToPass} cleared to beat ${lvl.name}. Try again!`;
+          modalTrophyIcon.textContent = '🎪';
           starsDisplay.innerHTML = '<span class="opacity-30">⭐</span><span class="opacity-30">⭐</span><span class="opacity-30">⭐</span>';
           sound.playGameOver();
+
+          modalActionBtn.textContent = 'RETRY LEVEL';
+          modalActionBtn.onclick = () => {
+            resultModal.classList.add('hidden');
+            this.reset();
+          };
         }
 
         resultModal.classList.remove('hidden');
@@ -1429,8 +1606,9 @@
       }
 
       reset() {
+        const lvl = this.getCurrentLevel();
         this.score = 0;
-        this.ballsRemaining = 3;
+        this.ballsRemaining = lvl.balls;
         this.totalThrowsUsed = 0;
         this.isGameOver = false;
         this.isDragging = false;
@@ -1446,11 +1624,10 @@
         flightLockBadge.classList.add('hidden');
         if (dragHint) dragHint.style.display = 'block';
         this.syncHUD();
-        this.showToast('Touch & pull back to aim and throw!');
       }
 
       syncHUD() {
-        scoreText.innerHTML = `${this.score} <span class="text-white/60 text-sm">/ 6</span>`;
+        scoreText.innerHTML = `${this.score} <span class="text-white/60 text-xs sm:text-sm">/ 6</span>`;
 
         const dots = ballsContainer.querySelectorAll('.ball-dot');
         dots.forEach((dot, idx) => {
@@ -1470,6 +1647,51 @@
         if (progressPercent) {
           progressPercent.textContent = `${pct}%`;
         }
+      }
+
+      renderLevelSelectorModal() {
+        levelListGrid.innerHTML = '';
+
+        GAME_LEVELS.forEach((lvl, idx) => {
+          const isUnlocked = lvl.id <= this.unlockedLevels;
+          const isCurrent = idx === this.currentLevelIndex;
+
+          const card = document.createElement('div');
+          card.className = `p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+            isCurrent
+              ? 'bg-amber-950/60 border-amber-400 shadow-md shadow-amber-900/40'
+              : isUnlocked
+              ? 'bg-black/50 border-white/10 hover:border-amber-400/50 hover:bg-neutral-900/60 cursor-pointer'
+              : 'bg-black/30 border-white/5 opacity-50 cursor-not-allowed'
+          }`;
+
+          card.innerHTML = `
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl ${isUnlocked ? 'bg-gradient-to-tr from-amber-500 to-rose-600 text-white' : 'bg-neutral-800 text-neutral-500'} flex items-center justify-center font-black text-sm shrink-0">
+                ${isUnlocked ? lvl.id : '🔒'}
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h3 class="font-bold text-sm text-white">${lvl.name}</h3>
+                  <span class="text-[8px] font-black px-1.5 py-0.2 rounded ${lvl.badgeColor}">${lvl.difficulty}</span>
+                </div>
+                <p class="text-[10px] text-neutral-400 leading-tight">${lvl.desc}</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              ${isCurrent ? '<span class="text-xs font-black text-amber-400">ACTIVE</span>' : isUnlocked ? '<button class="px-2.5 py-1 text-[11px] font-bold bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black rounded-lg transition-all border border-amber-500/40">PLAY</button>' : '<span class="text-xs text-neutral-600">LOCKED</span>'}
+            </div>
+          `;
+
+          if (isUnlocked) {
+            card.onclick = () => {
+              levelSelectModal.classList.add('hidden');
+              this.loadLevel(idx);
+            };
+          }
+
+          levelListGrid.appendChild(card);
+        });
       }
 
       drawAimGuide(c) {
@@ -1708,9 +1930,22 @@
           this.reset();
         });
 
-        modalPlayAgainBtn.addEventListener('click', (e) => {
+        levelSelectBtn.addEventListener('click', (e) => {
           e.preventDefault();
-          this.reset();
+          this.renderLevelSelectorModal();
+          levelSelectModal.classList.remove('hidden');
+        });
+
+        closeLevelModalBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          levelSelectModal.classList.add('hidden');
+        });
+
+        modalChangeLevelBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          resultModal.classList.add('hidden');
+          this.renderLevelSelectorModal();
+          levelSelectModal.classList.remove('hidden');
         });
 
         soundToggleBtn.addEventListener('click', (e) => {
