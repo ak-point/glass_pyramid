@@ -1,0 +1,1962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>6-Glass Pyramid Challenge - Touch &amp; Pull Edition</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+
+    html, body {
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #060201;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: #fff;
+    }
+
+    .carnival-title {
+      font-family: 'Fredoka', cursive, sans-serif;
+      text-shadow: 0 4px 14px rgba(0, 0, 0, 0.9), 0 0 25px rgba(239, 68, 68, 0.6);
+    }
+
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: grab;
+    }
+    #gameCanvas:active {
+      cursor: grabbing;
+    }
+
+    .btn-bounce {
+      transition: all 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-bounce:active {
+      transform: scale(0.93);
+    }
+
+    .glass-panel {
+      background: rgba(18, 7, 4, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(245, 158, 11, 0.32);
+      box-shadow: 0 14px 40px 0 rgba(0, 0, 0, 0.85);
+    }
+
+    @keyframes windBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .wind-anim {
+      animation: windBlink 1.4s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center p-2 sm:p-3">
+
+  <!-- TOP HUD -->
+  <header class="w-full max-w-4xl flex items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl glass-panel z-10 shrink-0">
+    <div class="flex items-center gap-2 sm:gap-3">
+      <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-red-600 via-rose-600 to-amber-500 flex items-center justify-center shadow-lg shadow-red-600/40 text-lg sm:text-xl font-black">
+        🎪
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-base sm:text-xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-rose-300 to-amber-400 carnival-title leading-tight">
+            6-Glass Pyramid
+          </h1>
+          <span class="px-2 py-0.5 text-[9px] font-black rounded-md bg-red-700/80 text-white uppercase tracking-wider border border-red-500/50 shadow-sm">
+            PRO MODE
+          </span>
+        </div>
+        <p class="text-[10px] sm:text-[11px] text-amber-200/80 font-semibold hidden xs:block sm:block">
+          Touch &amp; pull backward to aim &bull; Release to throw
+        </p>
+      </div>
+    </div>
+
+    <!-- Stats & Wind Indicator -->
+    <div class="flex items-center gap-2 sm:gap-4">
+      <!-- Live Crosswind HUD Gauge -->
+      <div class="flex flex-col items-center px-2 py-1 bg-black/60 rounded-xl border border-sky-500/30 min-w-[70px] sm:min-w-[90px]">
+        <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-sky-300 font-bold flex items-center gap-1">
+          <span class="wind-anim">💨</span> WIND
+        </span>
+        <span id="windDisplay" class="text-xs sm:text-sm font-black text-sky-300 tracking-tight">0.0 MPH</span>
+      </div>
+
+      <!-- Remaining Balls Indicator -->
+      <div class="flex flex-col items-center">
+        <span class="text-[9px] sm:text-[10px] uppercase tracking-wider text-amber-300 font-bold mb-0.5">Balls</span>
+        <div id="ballsContainer" class="flex items-center gap-1.5 sm:gap-2">
+          <span class="ball-dot w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-red-400 via-red-600 to-red-950 border-2 border-white/80 shadow-md shadow-red-950/80 transition-all duration-300"></span>
+          <span class="ball-dot w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-red-400 via-red-600 to-red-950 border-2 border-white/80 shadow-md shadow-red-950/80 transition-all duration-300"></span>
+          <span class="ball-dot w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-red-400 via-red-600 to-red-950 border-2 border-white/80 shadow-md shadow-red-950/80 transition-all duration-300"></span>
+        </div>
+      </div>
+
+      <!-- Score Box -->
+      <div class="flex flex-col items-center px-2.5 sm:px-3 py-1 bg-black/60 rounded-xl border border-amber-500/30 min-w-[65px] sm:min-w-[85px]">
+        <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-amber-300 font-bold">Cleared</span>
+        <span id="scoreText" class="text-base sm:text-lg font-black text-amber-400">0 <span class="text-white/60 text-xs sm:text-sm">/ 6</span></span>
+      </div>
+
+      <!-- Audio & Restart Buttons -->
+      <div class="flex items-center gap-1">
+        <button id="soundToggleBtn" title="Toggle Sound" class="w-9 h-9 rounded-xl bg-amber-950/70 active:bg-amber-800 text-amber-300 border border-amber-500/30 flex items-center justify-center transition-all text-base p-1">
+          🔊
+        </button>
+        <button id="restartBtn" title="Restart Game" class="w-9 h-9 rounded-xl bg-red-950/70 active:bg-red-800 text-red-200 border border-red-500/30 flex items-center justify-center transition-all text-base font-bold p-1">
+          ↺
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CANVAS MAIN WRAPPER -->
+  <main class="w-full max-w-4xl relative flex-1 flex flex-col items-center justify-center my-1 rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-amber-600/30 shadow-2xl bg-black aspect-[4/3] max-h-[68vh] min-h-[300px]">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- In-flight indicator -->
+    <div id="flightLockBadge" class="absolute bottom-3 left-3 pointer-events-none px-3 py-1 bg-black/85 rounded-full text-[11px] sm:text-xs text-amber-300 font-semibold border border-amber-500/30 backdrop-blur-md hidden flex items-center gap-2 shadow-lg">
+      <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+      Ball In Flight...
+    </div>
+
+    <!-- Status Toast Notification -->
+    <div id="statusToast" class="absolute top-3 pointer-events-none px-3.5 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-neutral-950 font-black text-xs sm:text-sm shadow-2xl tracking-wide opacity-0 transform -translate-y-2 transition-all duration-300 max-w-[90%] text-center">
+      Touch &amp; pull backward to aim &amp; release to throw!
+    </div>
+
+    <!-- Touch Drag Prompt -->
+    <div id="dragHint" class="absolute bottom-3 text-center pointer-events-none text-[11px] sm:text-xs text-white/90 tracking-wider px-2">
+      <span class="bg-black/90 px-3.5 py-1.5 rounded-full border border-amber-500/30 backdrop-blur-sm shadow-md inline-flex items-center gap-1.5 font-bold">
+        <span>✋</span> Touch screen, pull back like a slingshot, and release!
+      </span>
+    </div>
+  </main>
+
+  <!-- BOTTOM CONTROLS & HUD (Streamlined without Angle / Power numbers) -->
+  <footer class="w-full max-w-4xl mt-1 px-3 sm:px-4 py-2.5 rounded-2xl glass-panel flex items-center justify-between gap-3 z-10 shrink-0">
+    <div class="w-full flex items-center gap-3">
+      <div class="flex items-center gap-1.5 text-xs font-bold text-amber-300 shrink-0">
+        <span>🏆</span>
+        <span>Table Clearance</span>
+      </div>
+      <div class="flex-1 h-3 bg-black/60 rounded-full overflow-hidden border border-white/10 p-0.5">
+        <div id="progressBar" class="h-full bg-gradient-to-r from-amber-400 via-rose-500 to-red-600 rounded-full transition-all duration-300 w-0"></div>
+      </div>
+      <span id="progressPercent" class="text-xs font-black text-amber-400 min-w-[36px] text-right">0%</span>
+    </div>
+  </footer>
+
+  <!-- RESULTS POPUP MODAL -->
+  <div id="resultModal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden transition-opacity duration-300">
+    <div class="relative w-full max-w-sm bg-gradient-to-b from-neutral-900 to-neutral-950 p-6 rounded-3xl border-2 border-red-500/70 shadow-2xl text-center flex flex-col items-center">
+      <div id="modalTrophyIcon" class="text-6xl mb-2 animate-bounce">🎪</div>
+      <h2 id="modalTitle" class="text-2xl font-black text-amber-400 carnival-title mb-1">Carnival Challenge Over</h2>
+      <p id="modalSubtitle" class="text-xs text-neutral-300 mb-4 font-medium">Cleared off table: 0 of 6!</p>
+
+      <div id="starsDisplay" class="flex items-center gap-2 text-2xl text-amber-400 mb-5">
+        <span class="opacity-25">⭐</span><span class="opacity-25">⭐</span><span class="opacity-25">⭐</span>
+      </div>
+
+      <div class="w-full grid grid-cols-2 gap-3 mb-5">
+        <div class="bg-black/60 p-3 rounded-2xl border border-white/10">
+          <div class="text-[10px] text-neutral-400 uppercase font-bold">Fell Off Table</div>
+          <div id="modalGlassesScore" class="text-xl font-black text-amber-400">0 / 6</div>
+        </div>
+        <div class="bg-black/60 p-3 rounded-2xl border border-white/10">
+          <div class="text-[10px] text-neutral-400 uppercase font-bold">Balls Used</div>
+          <div id="modalBallsUsed" class="text-xl font-black text-rose-400">3 / 3</div>
+        </div>
+      </div>
+
+      <button id="modalPlayAgainBtn" class="w-full py-3 bg-gradient-to-r from-amber-500 via-rose-600 to-red-600 hover:from-amber-400 hover:to-red-500 text-white font-black text-base rounded-2xl shadow-xl shadow-red-700/50 btn-bounce border border-white/20">
+        TRY AGAIN
+      </button>
+    </div>
+  </div>
+
+  <script>
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        return this.muted;
+      }
+
+      playWindup() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(80, now);
+        osc.frequency.exponentialRampToValueAtTime(160, now + 0.15);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      }
+
+      playWhoosh(windMult = 1.0) {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(110 + windMult * 15, now);
+        osc.frequency.exponentialRampToValueAtTime(560, now + 0.32);
+
+        gain.gain.setValueAtTime(0.32, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.37);
+      }
+
+      playHeavyBlast(force = 1.0) {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        
+        // Deep thud
+        const subOsc = this.ctx.createOscillator();
+        const subGain = this.ctx.createGain();
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(140, now);
+        subOsc.frequency.exponentialRampToValueAtTime(25, now + 0.28);
+        subGain.gain.setValueAtTime(Math.min(0.7, 0.45 * force), now);
+        subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        subOsc.connect(subGain);
+        subGain.connect(this.ctx.destination);
+        subOsc.start(now);
+        subOsc.stop(now + 0.32);
+
+        // Glass tumbler clatter
+        const pitches = [1400, 1950, 2600, 3400];
+        pitches.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(freq + (Math.random() * 80 - 40), now);
+          gain.gain.setValueAtTime(0.12 * force, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16 + idx * 0.04);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        });
+      }
+
+      playGlassClink(force = 1.0) {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const pitches = [1850, 2400, 3100];
+        pitches.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq + (Math.random() * 60 - 30), now);
+          const volume = Math.min(0.2, (0.18 / (idx + 1)) * force);
+          gain.gain.setValueAtTime(volume, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2 + idx * 0.06);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.38);
+        });
+      }
+
+      playTableThud(force = 1.0) {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(130, now);
+        osc.frequency.exponentialRampToValueAtTime(35, now + 0.18);
+        gain.gain.setValueAtTime(Math.min(0.3, 0.2 * force), now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      }
+
+      playFloorCrash() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const thudOsc = this.ctx.createOscillator();
+        const thudGain = this.ctx.createGain();
+        thudOsc.type = 'sine';
+        thudOsc.frequency.setValueAtTime(120, now);
+        thudOsc.frequency.exponentialRampToValueAtTime(20, now + 0.28);
+        thudGain.gain.setValueAtTime(0.38, now);
+        thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        thudOsc.connect(thudGain);
+        thudGain.connect(this.ctx.destination);
+        thudOsc.start(now);
+        thudOsc.stop(now + 0.32);
+      }
+
+      playScoreChime() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(880.00, now + 0.08);
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.38);
+      }
+
+      playVictory() {
+        if (this.muted || !this.ctx) return;
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const t = this.ctx.currentTime + idx * 0.12;
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.22, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.38);
+        });
+      }
+
+      playGameOver() {
+        if (this.muted || !this.ctx) return;
+        const notes = [369.99, 329.63, 293.66, 220.00];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const t = this.ctx.currentTime + idx * 0.14;
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.12, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.32);
+        });
+      }
+    }
+
+    const sound = new SoundFX();
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const V_WIDTH = 900;
+    const V_HEIGHT = 650;
+    let dpr = 1;
+
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(canvas.width / V_WIDTH, canvas.height / V_HEIGHT);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // DOM Elements
+    const scoreText = document.getElementById('scoreText');
+    const ballsContainer = document.getElementById('ballsContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    const restartBtn = document.getElementById('restartBtn');
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+    const statusToast = document.getElementById('statusToast');
+    const flightLockBadge = document.getElementById('flightLockBadge');
+    const dragHint = document.getElementById('dragHint');
+    const windDisplay = document.getElementById('windDisplay');
+
+    const resultModal = document.getElementById('resultModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSubtitle = document.getElementById('modalSubtitle');
+    const modalTrophyIcon = document.getElementById('modalTrophyIcon');
+    const modalGlassesScore = document.getElementById('modalGlassesScore');
+    const modalBallsUsed = document.getElementById('modalBallsUsed');
+    const starsDisplay = document.getElementById('starsDisplay');
+    const modalPlayAgainBtn = document.getElementById('modalPlayAgainBtn');
+
+    // Deep table geometry
+    const TABLE = {
+      surfaceY: 312,
+      frontLipY: 330,
+      leftX: 260,
+      rightX: 640,
+      depthTopY: 260,
+      depthLeftX: 308,
+      depthRightX: 592,
+      floorY: 485,
+      skirtHeight: 18,
+    };
+
+    function isInsideTabletop(px, py) {
+      if (py < TABLE.depthTopY || py > TABLE.surfaceY) return false;
+      const t = (py - TABLE.depthTopY) / (TABLE.surfaceY - TABLE.depthTopY);
+      const edgeLeft = TABLE.depthLeftX + (TABLE.leftX - TABLE.depthLeftX) * t;
+      const edgeRight = TABLE.depthRightX + (TABLE.rightX - TABLE.depthRightX) * t;
+      return px >= edgeLeft - 6 && px <= edgeRight + 6;
+    }
+
+    class PlayerThrowingHand {
+      constructor() {
+        this.baseX = V_WIDTH / 2;
+        this.baseY = V_HEIGHT - 65;
+        this.handX = this.baseX;
+        this.handY = this.baseY;
+        this.wristAngle = 0;
+        this.fingerCurl = 0.85;
+
+        this.state = 'idle'; // 'idle', 'windup', 'swing', 'followthrough', 'recovering'
+        this.animTimer = 0;
+        this.animDuration = 0;
+
+        this.pendingAngle = 0;
+        this.pendingPower = 85;
+        this.pendingWind = 0;
+        this.onReleaseCallback = null;
+      }
+
+      reset() {
+        this.state = 'idle';
+        this.animTimer = 0;
+        this.fingerCurl = 0.85;
+        this.handX = this.baseX;
+        this.handY = this.baseY;
+        this.wristAngle = 0;
+      }
+
+      startThrow(angleDeg, powerPercent, currentWind, onRelease) {
+        this.pendingAngle = angleDeg;
+        this.pendingPower = powerPercent;
+        this.pendingWind = currentWind;
+        this.onReleaseCallback = onRelease;
+
+        const clampedPower = Math.max(20, powerPercent);
+        const speedFactor = 100 / clampedPower;
+        this.state = 'windup';
+        this.animTimer = 0;
+        this.animDuration = 0.16 * speedFactor;
+        sound.playWindup();
+      }
+
+      update(dt, aimAngle, isDragging, dragPullRatio) {
+        if (this.state === 'idle') {
+          const idleWave = Math.sin(performance.now() * 0.003) * 3;
+          if (isDragging) {
+            const rad = (aimAngle * Math.PI) / 180;
+            const pullBackDist = dragPullRatio * 55;
+            this.handX = this.baseX - Math.sin(rad) * pullBackDist;
+            this.handY = this.baseY + Math.cos(rad) * pullBackDist;
+            this.wristAngle = rad * 0.7;
+            this.fingerCurl = 0.95;
+          } else {
+            const rad = (aimAngle * Math.PI) / 180;
+            this.handX = this.baseX + Math.sin(rad) * 16;
+            this.handY = this.baseY + idleWave;
+            this.wristAngle = rad * 0.45;
+            this.fingerCurl = 0.85;
+          }
+          return;
+        }
+
+        this.animTimer += dt;
+        const p = Math.min(1.0, this.animTimer / (this.animDuration || 0.001));
+
+        if (this.state === 'windup') {
+          const rad = (this.pendingAngle * Math.PI) / 180;
+          const powerMult = Math.max(0.2, this.pendingPower / 100);
+          const pullBackY = 65 * powerMult;
+          const pullBackX = -Math.sin(rad) * 45 * powerMult;
+
+          this.handX = this.baseX + pullBackX * p;
+          this.handY = this.baseY + pullBackY * Math.sin(p * Math.PI * 0.5);
+          this.wristAngle = rad * 0.6 - (p * 0.35);
+          this.fingerCurl = 0.98;
+
+          if (p >= 1.0) {
+            this.state = 'swing';
+            this.animTimer = 0;
+            this.animDuration = 0.13 * (100 / Math.max(25, this.pendingPower));
+          }
+        } else if (this.state === 'swing') {
+          const rad = (this.pendingAngle * Math.PI) / 180;
+          const powerMult = Math.max(0.2, this.pendingPower / 100);
+          const forwardReachX = Math.sin(rad) * 75 * powerMult;
+          const forwardReachY = -60 * powerMult;
+
+          const easeSwing = Math.sin(p * Math.PI * 0.5);
+          this.handX = (this.baseX - Math.sin(rad) * 35) + forwardReachX * easeSwing;
+          this.handY = (this.baseY + 45) + forwardReachY * easeSwing;
+          this.wristAngle = rad + (easeSwing * 0.4);
+
+          if (p >= 0.78 && this.fingerCurl > 0.3) {
+            this.fingerCurl = 0.05;
+            if (this.onReleaseCallback) {
+              const cb = this.onReleaseCallback;
+              this.onReleaseCallback = null;
+              cb(this.handX, this.handY - 14);
+            }
+          }
+
+          if (p >= 1.0) {
+            this.state = 'followthrough';
+            this.animTimer = 0;
+            this.animDuration = 0.20;
+          }
+        } else if (this.state === 'followthrough') {
+          const rad = (this.pendingAngle * Math.PI) / 180;
+          this.handX += Math.sin(rad) * 1.5;
+          this.handY += 28 * dt;
+          this.fingerCurl = Math.max(0.0, this.fingerCurl - dt * 2);
+
+          if (p >= 1.0) {
+            this.state = 'recovering';
+            this.animTimer = 0;
+            this.animDuration = 0.38;
+          }
+        } else if (this.state === 'recovering') {
+          const smooth = p * p * (3 - 2 * p);
+          this.handX = this.handX + (this.baseX - this.handX) * smooth;
+          this.handY = this.handY + (this.baseY - this.handY) * smooth;
+          this.wristAngle *= (1 - smooth);
+          this.fingerCurl = 0.1 + 0.75 * smooth;
+
+          if (p >= 1.0) {
+            this.state = 'idle';
+            this.fingerCurl = 0.85;
+          }
+        }
+      }
+
+      draw(c, ballInFlight, ballsRemaining) {
+        c.save();
+        const x = this.handX;
+        const y = this.handY;
+
+        c.translate(x, y);
+        c.rotate(this.wristAngle);
+
+        const armBottomY = 220;
+        const forearmGrad = c.createLinearGradient(-35, 30, 45, armBottomY);
+        forearmGrad.addColorStop(0.0, '#312e81');
+        forearmGrad.addColorStop(0.5, '#1e1b4b');
+        forearmGrad.addColorStop(1.0, '#0f0e26');
+
+        c.beginPath();
+        c.moveTo(-28, 32);
+        c.lineTo(-44, armBottomY);
+        c.lineTo(44, armBottomY);
+        c.lineTo(28, 32);
+        c.closePath();
+        c.fillStyle = forearmGrad;
+        c.fill();
+        c.lineWidth = 2.2;
+        c.strokeStyle = '#4338ca';
+        c.stroke();
+
+        // White cuff
+        c.beginPath();
+        c.ellipse(0, 30, 29, 9, 0, 0, Math.PI * 2);
+        c.fillStyle = '#f8fafc';
+        c.fill();
+        c.strokeStyle = '#cbd5e1';
+        c.lineWidth = 1.5;
+        c.stroke();
+
+        // Wrist
+        const skinGrad = c.createLinearGradient(-20, 0, 20, 28);
+        skinGrad.addColorStop(0, '#fed7aa');
+        skinGrad.addColorStop(0.5, '#fba36e');
+        skinGrad.addColorStop(1, '#ea580c');
+
+        c.beginPath();
+        c.rect(-20, 16, 40, 16);
+        c.fillStyle = skinGrad;
+        c.fill();
+
+        // Palm
+        c.beginPath();
+        c.ellipse(0, 6, 26, 20, 0, 0, Math.PI * 2);
+        c.fillStyle = skinGrad;
+        c.fill();
+
+        const isHoldingBall = (this.state === 'idle' || this.state === 'windup' || (this.state === 'swing' && this.fingerCurl > 0.3)) && (!ballInFlight && ballsRemaining > 0);
+
+        if (isHoldingBall) {
+          const ballR = 26;
+          c.save();
+          c.beginPath();
+          c.arc(0, -6, ballR, 0, Math.PI * 2);
+          const sphereGrad = c.createRadialGradient(-ballR * 0.35, -6 - ballR * 0.35, ballR * 0.1, 0, -6, ballR);
+          sphereGrad.addColorStop(0.0, '#ffe4e6');
+          sphereGrad.addColorStop(0.25, '#fb7185');
+          sphereGrad.addColorStop(0.65, '#e11d48');
+          sphereGrad.addColorStop(0.9, '#881337');
+          sphereGrad.addColorStop(1.0, '#4c0519');
+          c.fillStyle = sphereGrad;
+          c.fill();
+          c.lineWidth = 1.8;
+          c.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+          c.stroke();
+          c.restore();
+        }
+
+        const curl = this.fingerCurl;
+        const fingers = [
+          { x: -16, y: -2, len: 26, angleOffset: -0.32 },
+          { x: -6,  y: -6, len: 30, angleOffset: -0.10 },
+          { x: 6,   y: -5, len: 27, angleOffset: 0.12 },
+          { x: 16,  y: -1, len: 22, angleOffset: 0.34 }
+        ];
+
+        fingers.forEach(f => {
+          c.save();
+          c.translate(f.x, f.y);
+          const fingerTilt = f.angleOffset * (1 - curl * 0.6) + (curl * -0.5);
+          c.rotate(fingerTilt);
+
+          const curLen = f.len * (1 - curl * 0.3);
+          c.beginPath();
+          c.moveTo(-4, 0);
+          c.lineTo(-3, -curLen);
+          c.arc(0, -curLen, 4.2, Math.PI, 0);
+          c.lineTo(3.8, 0);
+          c.closePath();
+
+          const fGrad = c.createLinearGradient(0, 0, 0, -curLen);
+          fGrad.addColorStop(0, '#fba36e');
+          fGrad.addColorStop(1, '#ffedd5');
+          c.fillStyle = fGrad;
+          c.fill();
+          c.strokeStyle = 'rgba(194, 65, 12, 0.45)';
+          c.lineWidth = 1.3;
+          c.stroke();
+          c.restore();
+        });
+
+        // Thumb
+        c.save();
+        c.translate(-18, 10);
+        const thumbAngle = -0.55 + (curl * 0.65);
+        c.rotate(thumbAngle);
+        const thumbLen = 22 * (1 - curl * 0.2);
+        c.beginPath();
+        c.ellipse(0, -thumbLen * 0.5, 5.5, thumbLen * 0.55, 0, 0, Math.PI * 2);
+        c.fillStyle = skinGrad;
+        c.fill();
+        c.strokeStyle = 'rgba(194, 65, 12, 0.5)';
+        c.lineWidth = 1.3;
+        c.stroke();
+        c.restore();
+
+        c.restore();
+      }
+    }
+
+    class InvertedGlass {
+      constructor(id, tier, indexInTier, x, y, width, height, supports = []) {
+        this.id = id;
+        this.tier = tier;
+        this.indexInTier = indexInTier;
+        this.supports = supports;
+
+        this.originX = x;
+        this.originY = y;
+        this.x = x;
+        this.y = y;
+        this.z = 0;
+        this.vz = 0;
+        this.width = width;
+        this.height = height;
+
+        this.vx = 0;
+        this.vy = 0;
+        this.angle = 0;
+        this.vAngle = 0;
+        this.isKnocked = false;
+        this.hasHitTable = false;
+        this.isOffTable = false;
+        this.fellOffBack = false;
+        this.scored = false;
+        this.hitFloor = false;
+
+        this.rimWidth = width * 1.05;
+        this.baseWidth = width * 0.74;
+        this.mass = 1.95;
+      }
+
+      reset() {
+        this.x = this.originX;
+        this.y = this.originY;
+        this.z = 0;
+        this.vz = 0;
+        this.vx = 0;
+        this.vy = 0;
+        this.angle = 0;
+        this.vAngle = 0;
+        this.isKnocked = false;
+        this.hasHitTable = false;
+        this.isOffTable = false;
+        this.fellOffBack = false;
+        this.scored = false;
+        this.hitFloor = false;
+      }
+
+      applyImpulse(fx, fy, torque = 0, fz = 0) {
+        this.isKnocked = true;
+        this.vx += fx / this.mass;
+        this.vy += fy / this.mass;
+        this.vz += fz / this.mass;
+        this.vAngle += torque / this.mass;
+      }
+
+      checkSupportLoss(allGlasses) {
+        if (this.isKnocked || this.tier === 0) return;
+
+        let totalDisplaced = 0;
+        for (let supId of this.supports) {
+          const sup = allGlasses[supId];
+          if (sup && (sup.isKnocked || Math.abs(sup.x - sup.originX) > 20 || Math.abs(sup.angle) > 0.32)) {
+            totalDisplaced++;
+          }
+        }
+
+        if (totalDisplaced >= this.supports.length || (this.tier === 2 && totalDisplaced >= 1)) {
+          this.isKnocked = true;
+          const dir = (Math.random() > 0.5 ? 1 : -1);
+          this.vx += dir * (40 + Math.random() * 35);
+          this.vy += 30 + Math.random() * 20;
+          this.vAngle += dir * (1.2 + Math.random() * 1.5);
+        }
+      }
+
+      getCorners() {
+        const cos = Math.cos(this.angle);
+        const sin = Math.sin(this.angle);
+        const halfH = this.height * 0.5;
+        const topW = this.baseWidth * 0.5;
+        const botW = this.rimWidth * 0.5;
+
+        const localCorners = [
+          { x: -topW, y: -halfH },
+          { x:  topW, y: -halfH },
+          { x:  botW, y:  halfH },
+          { x: -botW, y:  halfH },
+        ];
+
+        return localCorners.map(pt => ({
+          x: this.x + (pt.x * cos - pt.y * sin),
+          y: this.y + (pt.x * sin + pt.y * cos),
+        }));
+      }
+
+      update(dt) {
+        if (!this.isKnocked) return;
+
+        const GRAVITY = 1180;
+        this.vy += GRAVITY * dt;
+
+        this.vx *= 0.965;
+        this.vy *= 0.985;
+        this.vAngle *= 0.96;
+
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.z += this.vz * dt;
+        this.angle += this.vAngle * dt;
+
+        const corners = this.getCorners();
+        let lowestY = -Infinity;
+        let lowestCorner = null;
+
+        for (let pt of corners) {
+          if (pt.y > lowestY) {
+            lowestY = pt.y;
+            lowestCorner = pt;
+          }
+        }
+
+        const onTable = isInsideTabletop(this.x, this.y);
+
+        if (!this.isOffTable) {
+          if (!onTable) {
+            this.isOffTable = true;
+            if (this.y < TABLE.depthTopY) {
+              this.fellOffBack = true;
+              this.vz = -0.5 - Math.random() * 0.4;
+              this.vAngle += (Math.random() > 0.5 ? 3.5 : -3.5);
+            } else {
+              this.vAngle += (this.vx > 0 ? 3.0 : -3.0);
+            }
+          } else {
+            if (lowestY >= TABLE.surfaceY) {
+              const penetration = lowestY - TABLE.surfaceY;
+              this.y -= penetration;
+
+              const leverArmX = lowestCorner ? (lowestCorner.x - this.x) : 0;
+              const impactSpeed = Math.abs(this.vy);
+
+              if (impactSpeed > 45) {
+                this.vy = -this.vy * 0.16;
+                this.vx *= 0.60;
+                this.vAngle += (leverArmX * 0.06) * (this.vy > 0 ? 1 : -1);
+                if (!this.hasHitTable) {
+                  this.hasHitTable = true;
+                  sound.playTableThud(Math.min(1.0, impactSpeed / 220));
+                }
+              } else {
+                this.vy = 0;
+                this.vx *= 0.82;
+                this.vAngle *= 0.75;
+              }
+            }
+          }
+        } else {
+          if (lowestY >= TABLE.floorY && !this.hitFloor) {
+            this.hitFloor = true;
+            this.y -= (lowestY - TABLE.floorY);
+            this.vy = -this.vy * 0.12;
+            this.vx *= 0.30;
+            this.vAngle *= 0.30;
+            sound.playFloorCrash();
+          } else if (this.hitFloor) {
+            if (lowestY >= TABLE.floorY) {
+              this.y -= (lowestY - TABLE.floorY);
+              this.vy = 0;
+              this.vx *= 0.75;
+              this.vAngle *= 0.70;
+            }
+          }
+        }
+      }
+
+      draw(c) {
+        c.save();
+        const scale = this.fellOffBack ? Math.max(0.42, 1 - Math.abs(this.z) * 0.35) : 1;
+        const alpha = this.fellOffBack ? Math.max(0.32, 1 - Math.abs(this.z) * 0.25) : 1;
+
+        c.translate(this.x, this.y);
+        c.scale(scale, scale);
+        c.rotate(this.angle);
+        c.globalAlpha = alpha;
+
+        const halfH = this.height * 0.5;
+        const topW = this.baseWidth * 0.5;
+        const botW = this.rimWidth * 0.5;
+
+        // Shadow
+        c.beginPath();
+        c.ellipse(0, halfH + 2, botW * 0.85, 3.5, 0, 0, Math.PI * 2);
+        c.fillStyle = this.isOffTable ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.5)';
+        c.fill();
+
+        // Glass Body
+        c.beginPath();
+        c.moveTo(-topW, -halfH);
+        c.lineTo(topW, -halfH);
+        c.lineTo(botW, halfH);
+        c.lineTo(-botW, halfH);
+        c.closePath();
+
+        const glassGradient = c.createLinearGradient(-botW, 0, botW, 0);
+        glassGradient.addColorStop(0.0, 'rgba(195, 235, 255, 0.55)');
+        glassGradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.28)');
+        glassGradient.addColorStop(0.5, 'rgba(170, 220, 250, 0.14)');
+        glassGradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.30)');
+        glassGradient.addColorStop(1.0, 'rgba(185, 230, 255, 0.60)');
+
+        c.fillStyle = glassGradient;
+        c.fill();
+
+        c.lineWidth = 1.7;
+        c.strokeStyle = this.isOffTable ? 'rgba(255, 210, 140, 0.95)' : 'rgba(255, 255, 255, 0.82)';
+        c.stroke();
+
+        // Inverted Base at Top
+        c.beginPath();
+        c.ellipse(0, -halfH, topW, 4.2, 0, 0, Math.PI * 2);
+        c.fillStyle = 'rgba(230, 245, 255, 0.85)';
+        c.fill();
+        c.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        c.stroke();
+
+        // Rim at Bottom
+        c.beginPath();
+        c.ellipse(0, halfH, botW, 4.5, 0, 0, Math.PI * 2);
+        c.strokeStyle = 'rgba(255, 255, 255, 0.88)';
+        c.lineWidth = 2.0;
+        c.stroke();
+
+        c.restore();
+      }
+    }
+
+    class ProjectileBall {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.inFlight = false;
+        this.x = V_WIDTH / 2;
+        this.y = V_HEIGHT - 65;
+        this.z = 0;
+        this.vx = 0;
+        this.vy = 0;
+        this.vz = 0;
+        this.baseRadius = 26;
+        this.radius = 26;
+        this.trail = [];
+        this.hasHitAny = false;
+        this.powerRatio = 0.85;
+        this.activeWind = 0;
+      }
+
+      launchFromHand(startX, startY, angleDeg, powerPercent, currentWind) {
+        this.reset();
+        this.inFlight = true;
+        this.x = startX;
+        this.y = startY;
+        this.powerRatio = (0.35 + (powerPercent / 100) * 0.85);
+        this.activeWind = currentWind;
+
+        const flutter = (Math.random() - 0.5) * 0.6;
+        const rad = ((angleDeg + flutter) * Math.PI) / 180;
+        const initialSpeed = 1380 * this.powerRatio;
+
+        this.vx = Math.sin(rad) * initialSpeed * 0.94;
+        this.vy = -Math.cos(rad) * initialSpeed * 0.91;
+        this.vz = 2.22 * this.powerRatio;
+
+        sound.playWhoosh(Math.abs(currentWind));
+      }
+
+      update(dt) {
+        if (!this.inFlight) return;
+
+        this.trail.push({ 
+          x: this.x, 
+          y: this.y, 
+          r: this.radius,
+          power: this.powerRatio 
+        });
+        if (this.trail.length > 14) this.trail.shift();
+
+        const WIND_FORCE = 38;
+        this.vx += (this.activeWind * WIND_FORCE) * dt;
+
+        const BALL_GRAVITY = 680;
+        this.vy += BALL_GRAVITY * dt;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.z += this.vz * dt;
+
+        const scale = Math.max(0.30, 1 - (this.z * 0.54));
+        this.radius = this.baseRadius * scale;
+
+        if (this.y > V_HEIGHT + 140 || this.x < -180 || this.x > V_WIDTH + 180 || this.z > 2.8) {
+          this.inFlight = false;
+        }
+      }
+
+      draw(c) {
+        for (let i = 0; i < this.trail.length; i++) {
+          const t = this.trail[i];
+          const progress = i / this.trail.length;
+          const alpha = progress * 0.55;
+          const trailR = t.r * (0.35 + 0.65 * progress);
+
+          c.beginPath();
+          c.arc(t.x, t.y, trailR, 0, Math.PI * 2);
+          c.fillStyle = `rgba(244, 63, 94, ${alpha})`;
+          c.fill();
+        }
+
+        c.save();
+        const shadowAlpha = Math.max(0.12, 0.50 - this.z * 0.20);
+        c.beginPath();
+        c.ellipse(this.x, this.y + this.radius * 1.15, this.radius * 1.1, this.radius * 0.36, 0, 0, Math.PI * 2);
+        c.fillStyle = `rgba(0, 0, 0, ${shadowAlpha})`;
+        c.fill();
+
+        c.beginPath();
+        c.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+
+        const sphereGrad = c.createRadialGradient(
+          this.x - this.radius * 0.36,
+          this.y - this.radius * 0.36,
+          this.radius * 0.08,
+          this.x,
+          this.y,
+          this.radius
+        );
+        sphereGrad.addColorStop(0.0, '#ffe4e6');
+        sphereGrad.addColorStop(0.25, '#fb7185');
+        sphereGrad.addColorStop(0.65, '#e11d48');
+        sphereGrad.addColorStop(0.9, '#881337');
+        sphereGrad.addColorStop(1.0, '#4c0519');
+
+        c.fillStyle = sphereGrad;
+        c.fill();
+
+        c.lineWidth = Math.max(1.2, this.radius * 0.1);
+        c.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        c.beginPath();
+        c.arc(this.x - this.radius * 0.1, this.y - this.radius * 0.1, this.radius * 0.65, -0.7, 0.9);
+        c.stroke();
+        c.restore();
+      }
+    }
+
+    class Shockwave {
+      constructor(x, y, maxR = 75) {
+        this.x = x;
+        this.y = y;
+        this.radius = 6;
+        this.maxRadius = maxR;
+        this.alpha = 1.0;
+        this.life = 0.22;
+        this.age = 0;
+      }
+
+      update(dt) {
+        this.age += dt;
+        const p = this.age / this.life;
+        this.radius = 6 + (this.maxRadius - 6) * Math.sin(p * Math.PI * 0.5);
+        this.alpha = Math.max(0, 1 - p);
+      }
+
+      draw(c) {
+        c.save();
+        c.beginPath();
+        c.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        c.lineWidth = Math.max(1, 2.8 * this.alpha);
+        c.strokeStyle = `rgba(253, 164, 175, ${this.alpha * 0.8})`;
+        c.stroke();
+        c.restore();
+      }
+    }
+
+    class Particle {
+      constructor(x, y, color = '#bae6fd', isGlassShard = false, speedMult = 1.0) {
+        this.x = x;
+        this.y = y;
+        const baseSpeed = isGlassShard ? 440 : 320;
+        const angle = Math.random() * Math.PI * 2;
+        const mag = (Math.random() * 0.7 + 0.3) * baseSpeed * speedMult;
+        this.vx = Math.cos(angle) * mag;
+        this.vy = Math.sin(angle) * mag - (Math.random() * 90);
+        this.radius = isGlassShard ? (Math.random() * 3.5 + 1.5) : (Math.random() * 3 + 1);
+        this.color = color;
+        this.alpha = 1.0;
+        this.life = Math.random() * 0.45 + 0.35;
+        this.age = 0;
+        this.isGlassShard = isGlassShard;
+      }
+
+      update(dt) {
+        this.age += dt;
+        this.vy += 620 * dt;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.alpha = Math.max(0, 1 - (this.age / this.life));
+      }
+
+      draw(c) {
+        c.save();
+        c.globalAlpha = this.alpha;
+        c.fillStyle = this.color;
+        c.beginPath();
+        if (this.isGlassShard) {
+          c.rect(this.x, this.y, this.radius * 1.4, this.radius * 0.7);
+        } else {
+          c.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        }
+        c.fill();
+        c.restore();
+      }
+    }
+
+    class GameController {
+      constructor() {
+        this.glasses = [];
+        this.ball = new ProjectileBall();
+        this.hand = new PlayerThrowingHand();
+        this.particles = [];
+        this.shockwaves = [];
+        this.score = 0;
+        this.ballsRemaining = 3;
+        this.totalThrowsUsed = 0;
+        this.isGameOver = false;
+
+        this.crosswind = 0;
+        this.screenShakeTime = 0;
+        this.screenShakeIntensity = 0;
+
+        // Slingshot touch & pull state
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+        this.dragCurrX = 0;
+        this.dragCurrY = 0;
+        this.dragPullRatio = 0;
+
+        this.aimAngle = 0;
+        this.throwPower = 0;
+
+        this.lastTimestamp = performance.now();
+        this.rollNewWind();
+        this.initPyramidStack();
+        this.bindEvents();
+        this.syncHUD();
+      }
+
+      rollNewWind() {
+        const gust = (Math.random() * 9.0 - 4.5);
+        this.crosswind = Math.round(gust * 10) / 10;
+        this.updateWindUI();
+      }
+
+      updateWindUI() {
+        if (!windDisplay) return;
+        const dir = this.crosswind > 0.2 ? '▶ EAST' : (this.crosswind < -0.2 ? '◀ WEST' : 'CALM');
+        const absVal = Math.abs(this.crosswind).toFixed(1);
+        windDisplay.innerHTML = `${absVal} <span class="text-[9px] text-sky-400 font-bold">${dir}</span>`;
+      }
+
+      initPyramidStack() {
+        this.glasses = [];
+        const centerX = V_WIDTH / 2;
+
+        const gWidth = 48;
+        const gHeight = 68;
+        const spacingX = 54;
+        const tierHeight = 62;
+
+        const tier0Y = TABLE.surfaceY - (gHeight * 0.5);
+        const tier1Y = tier0Y - tierHeight;
+        const tier2Y = tier1Y - tierHeight;
+
+        let id = 0;
+
+        // Tier 0 (Bottom 3 glasses)
+        const row0Left = centerX - spacingX;
+        for (let i = 0; i < 3; i++) {
+          this.glasses.push(
+            new InvertedGlass(id++, 0, i, row0Left + (i * spacingX), tier0Y, gWidth, gHeight, [])
+          );
+        }
+
+        // Tier 1 (Middle 2 glasses)
+        const row1Left = centerX - (spacingX * 0.5);
+        this.glasses.push(new InvertedGlass(id++, 1, 0, row1Left, tier1Y, gWidth, gHeight, [0, 1]));
+        this.glasses.push(new InvertedGlass(id++, 1, 1, row1Left + spacingX, tier1Y, gWidth, gHeight, [1, 2]));
+
+        // Tier 2 (Top 1 glass)
+        this.glasses.push(new InvertedGlass(id++, 2, 0, centerX, tier2Y, gWidth, gHeight, [3, 4]));
+      }
+
+      spawnBurst(x, y, count = 10, color = '#bae6fd', isShards = false, speedMult = 1.0) {
+        for (let i = 0; i < count; i++) {
+          this.particles.push(new Particle(x, y, color, isShards, speedMult));
+        }
+      }
+
+      triggerScreenShake(intensity = 8, duration = 0.18) {
+        this.screenShakeIntensity = intensity;
+        this.screenShakeTime = duration;
+      }
+
+      showToast(text, duration = 1800) {
+        statusToast.textContent = text;
+        statusToast.style.opacity = '1';
+        statusToast.style.transform = 'translateY(0px)';
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => {
+          statusToast.style.opacity = '0';
+          statusToast.style.transform = 'translateY(-10px)';
+        }, duration);
+      }
+
+      triggerHandThrow() {
+        if (this.isGameOver || this.ball.inFlight || this.ballsRemaining <= 0 || this.hand.state !== 'idle') return;
+
+        sound.init();
+        this.ballsRemaining--;
+        this.totalThrowsUsed++;
+        this.syncHUD();
+        if (dragHint) dragHint.style.display = 'none';
+
+        this.hand.startThrow(this.aimAngle, this.throwPower, this.crosswind, (releaseX, releaseY) => {
+          this.ball.launchFromHand(releaseX, releaseY, this.aimAngle, this.throwPower, this.crosswind);
+          flightLockBadge.classList.remove('hidden');
+        });
+      }
+
+      handleCollisionsAndRules() {
+        for (let g of this.glasses) {
+          g.checkSupportLoss(this.glasses);
+        }
+
+        // Depth Target Window Collision
+        if (this.ball.inFlight && this.ball.z > 1.10 && this.ball.z < 1.48) {
+          for (let g of this.glasses) {
+            const dx = this.ball.x - g.x;
+            const dy = this.ball.y - g.y;
+            const dist = Math.hypot(dx, dy);
+            const hitRadius = (g.width * 0.44) + this.ball.radius;
+
+            if (dist < hitRadius) {
+              this.ball.hasHitAny = true;
+
+              const powerMult = this.ball.powerRatio;
+              const launchSignX = dx > 0 ? 1 : -1;
+
+              const blastSpeedX = (launchSignX * (410 + Math.abs(this.ball.vx) * 0.65)) * powerMult;
+              const blastSpeedY = (-220 - Math.abs(this.ball.vy) * 0.28) * powerMult;
+              const torque = ((dx / (g.width * 0.5)) * 22 + (dy / (g.height * 0.5)) * 12) * powerMult;
+              const blastZ = -0.4 * powerMult;
+
+              g.applyImpulse(blastSpeedX, blastSpeedY, torque, blastZ);
+
+              // Proximity shockwave
+              for (let other of this.glasses) {
+                if (other === g) continue;
+                const odx = other.x - this.ball.x;
+                const ody = other.y - this.ball.y;
+                const odist = Math.hypot(odx, ody);
+                if (odist < 90) {
+                  const factor = (1 - (odist / 90)) * powerMult * 0.6;
+                  other.applyImpulse(
+                    (odx / (odist || 1)) * 220 * factor,
+                    -100 * factor,
+                    (Math.random() - 0.5) * 12 * factor,
+                    -0.2 * factor
+                  );
+                }
+              }
+
+              sound.playHeavyBlast(powerMult);
+              this.triggerScreenShake(8 * powerMult, 0.18);
+              this.shockwaves.push(new Shockwave(this.ball.x, this.ball.y, 75 * powerMult));
+              this.spawnBurst(this.ball.x, this.ball.y, 14, '#fecdd3', false, 1.1);
+              this.spawnBurst(this.ball.x, this.ball.y, 10, '#ffffff', true, 1.2);
+
+              this.ball.vx *= 0.35;
+              this.ball.vy *= 0.30;
+              this.ball.vz *= 0.65;
+
+              this.showToast('💥 Direct strike! Clear them off!');
+              break;
+            }
+          }
+        }
+
+        // Inter-glass transfer of momentum
+        for (let i = 0; i < this.glasses.length; i++) {
+          const g1 = this.glasses[i];
+          if (!g1.isKnocked) continue;
+
+          for (let j = 0; j < this.glasses.length; j++) {
+            if (i === j) continue;
+            const g2 = this.glasses[j];
+
+            const dx = g2.x - g1.x;
+            const dy = g2.y - g1.y;
+            const dist = Math.hypot(dx, dy);
+            const contactDist = (g1.width + g2.width) * 0.48;
+
+            if (dist < contactDist) {
+              if (!g2.isKnocked) {
+                g2.isKnocked = true;
+                const pushX = (dx / (dist || 1)) * 240;
+                const pushY = (dy / (dist || 1)) * 160 - 50;
+                const torque = ((dx > 0 ? 1 : -1) * 16) + (Math.random() - 0.5) * 8;
+                g2.applyImpulse(pushX, pushY, torque);
+
+                sound.playGlassClink(1.0);
+                this.spawnBurst(g2.x, g2.y, 8, '#bae6fd', false, 0.9);
+              }
+            }
+          }
+        }
+
+        // Scoring: Must be off the table
+        let scoredThisFrame = false;
+        for (let g of this.glasses) {
+          if (!g.scored && g.isOffTable) {
+            if (g.fellOffBack || g.y > TABLE.surfaceY + 8) {
+              g.scored = true;
+              this.score++;
+              scoredThisFrame = true;
+
+              sound.playScoreChime();
+              this.spawnBurst(g.x, g.y, 18, '#fef08a', true);
+              this.showToast(g.fellOffBack ? 'Fell Off Back! (+1)' : 'Cleared Off Table! (+1)');
+            }
+          }
+        }
+
+        if (scoredThisFrame) {
+          this.syncHUD();
+        }
+
+        if (!this.ball.inFlight && !flightLockBadge.classList.contains('hidden')) {
+          flightLockBadge.classList.add('hidden');
+          this.checkThrowTurnEnd();
+        }
+      }
+
+      checkThrowTurnEnd() {
+        if (!this.ball.hasHitAny && this.score < 6) {
+          this.showToast('Missed target! Watch crosswind drift.', 1700);
+        } else {
+          const onTableKnocked = this.glasses.filter(g => g.isKnocked && !g.isOffTable).length;
+          if (onTableKnocked > 0 && this.score < 6) {
+            this.showToast(`${onTableKnocked} tumbler(s) trapped on table! Clear them off!`, 2200);
+          }
+        }
+
+        this.rollNewWind();
+
+        if (this.score >= 6) {
+          setTimeout(() => this.finishGame(true), 600);
+          return;
+        }
+
+        if (this.ballsRemaining <= 0) {
+          setTimeout(() => this.finishGame(false), 900);
+        }
+      }
+
+      finishGame(victory) {
+        if (this.isGameOver) return;
+        this.isGameOver = true;
+
+        modalGlassesScore.textContent = `${this.score} / 6`;
+        modalBallsUsed.textContent = `${this.totalThrowsUsed} / 3`;
+
+        if (this.score === 6) {
+          modalTitle.textContent = 'Carnival Master!';
+          modalSubtitle.textContent = 'Pure hand precision! You cleared every heavy glass!';
+          modalTrophyIcon.textContent = '🏆';
+          starsDisplay.innerHTML = '<span>⭐</span><span>⭐</span><span>⭐</span>';
+          sound.playVictory();
+          this.spawnConfetti();
+        } else if (this.score >= 4) {
+          modalTitle.textContent = 'Sharpshooter!';
+          modalSubtitle.textContent = 'Superb throwing arm against tricky fairground odds!';
+          modalTrophyIcon.textContent = '🎯';
+          starsDisplay.innerHTML = '<span>⭐</span><span>⭐</span><span class="opacity-30">⭐</span>';
+          sound.playVictory();
+        } else if (this.score >= 2) {
+          modalTitle.textContent = 'Tough Break!';
+          modalSubtitle.textContent = 'Carnival tumblers are dense! Throw with high power!';
+          modalTrophyIcon.textContent = '🎪';
+          starsDisplay.innerHTML = '<span>⭐</span><span class="opacity-30">⭐</span><span class="opacity-30">⭐</span>';
+          sound.playGameOver();
+        } else {
+          modalTitle.textContent = 'Booth Wins!';
+          modalSubtitle.textContent = 'The wind and heavy tumblers defeated you. Try again!';
+          modalTrophyIcon.textContent = '🃏';
+          starsDisplay.innerHTML = '<span class="opacity-30">⭐</span><span class="opacity-30">⭐</span><span class="opacity-30">⭐</span>';
+          sound.playGameOver();
+        }
+
+        resultModal.classList.remove('hidden');
+      }
+
+      spawnConfetti() {
+        const carnivalColors = ['#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#ec4899'];
+        for (let i = 0; i < 40; i++) {
+          const col = carnivalColors[Math.floor(Math.random() * carnivalColors.length)];
+          this.particles.push(new Particle(V_WIDTH / 2 + (Math.random() - 0.5) * 450, V_HEIGHT * 0.35, col));
+        }
+      }
+
+      reset() {
+        this.score = 0;
+        this.ballsRemaining = 3;
+        this.totalThrowsUsed = 0;
+        this.isGameOver = false;
+        this.isDragging = false;
+        this.dragPullRatio = 0;
+        this.aimAngle = 0;
+        this.throwPower = 0;
+        this.ball.reset();
+        this.hand.reset();
+        this.particles = [];
+        this.rollNewWind();
+        this.initPyramidStack();
+        resultModal.classList.add('hidden');
+        flightLockBadge.classList.add('hidden');
+        if (dragHint) dragHint.style.display = 'block';
+        this.syncHUD();
+        this.showToast('Touch & pull back to aim and throw!');
+      }
+
+      syncHUD() {
+        scoreText.innerHTML = `${this.score} <span class="text-white/60 text-sm">/ 6</span>`;
+
+        const dots = ballsContainer.querySelectorAll('.ball-dot');
+        dots.forEach((dot, idx) => {
+          if (idx < this.ballsRemaining) {
+            dot.classList.remove('opacity-20', 'scale-75', 'grayscale');
+            dot.classList.add('opacity-100', 'scale-100');
+          } else {
+            dot.classList.remove('opacity-100', 'scale-100');
+            dot.classList.add('opacity-20', 'scale-75', 'grayscale');
+          }
+        });
+
+        const pct = Math.round((this.score / 6) * 100);
+        if (progressBar) {
+          progressBar.style.width = `${pct}%`;
+        }
+        if (progressPercent) {
+          progressPercent.textContent = `${pct}%`;
+        }
+      }
+
+      drawAimGuide(c) {
+        if (this.ball.inFlight || this.isGameOver || this.ballsRemaining <= 0 || this.hand.state !== 'idle') return;
+
+        const startX = this.hand.handX;
+        const startY = this.hand.handY - 14;
+
+        const rad = (this.aimAngle * Math.PI) / 180;
+        const normPower = Math.max(0.2, (0.35 + (this.throwPower / 100) * 0.85));
+        const speed = 1380 * normPower;
+
+        let simX = startX;
+        let simY = startY;
+        let simVx = Math.sin(rad) * speed * 0.94;
+        let simVy = -Math.cos(rad) * speed * 0.91;
+        let simZ = 0;
+        const simVz = 2.22 * normPower;
+
+        const stepDt = 0.024;
+        const totalSteps = 12;
+
+        c.save();
+        for (let i = 0; i < totalSteps; i++) {
+          simVy += 680 * stepDt;
+          simVx += (this.crosswind * 38) * stepDt;
+          simX += simVx * stepDt;
+          simY += simVy * stepDt;
+          simZ += simVz * stepDt;
+
+          const dotRadius = Math.max(1.8, 6.5 * (1 - simZ * 0.42));
+          const alpha = 0.85 * (1 - (i / totalSteps));
+
+          c.beginPath();
+          c.arc(simX, simY, dotRadius, 0, Math.PI * 2);
+          c.fillStyle = `rgba(251, 146, 60, ${alpha})`;
+          c.fill();
+        }
+
+        // Target reticle
+        c.beginPath();
+        c.arc(simX, simY, 9, 0, Math.PI * 2);
+        c.lineWidth = 1.8;
+        c.strokeStyle = 'rgba(239, 68, 68, 0.45)';
+        c.setLineDash([3, 3]);
+        c.stroke();
+        c.setLineDash([]);
+        c.restore();
+      }
+
+      drawSlingshotPullLine(c) {
+        if (!this.isDragging) return;
+
+        c.save();
+        const startX = this.hand.baseX;
+        const startY = this.hand.baseY;
+        const touchX = this.dragCurrX;
+        const touchY = this.dragCurrY;
+
+        // Elastic cord
+        c.beginPath();
+        c.moveTo(startX, startY);
+        c.lineTo(touchX, touchY);
+        c.strokeStyle = `rgba(245, 158, 11, ${0.4 + this.dragPullRatio * 0.5})`;
+        c.lineWidth = 3 + this.dragPullRatio * 3;
+        c.setLineDash([6, 4]);
+        c.stroke();
+        c.setLineDash([]);
+
+        // Touch anchor indicator
+        c.beginPath();
+        c.arc(touchX, touchY, 14 + this.dragPullRatio * 8, 0, Math.PI * 2);
+        c.fillStyle = 'rgba(239, 68, 68, 0.35)';
+        c.fill();
+        c.strokeStyle = '#f59e0b';
+        c.lineWidth = 2.5;
+        c.stroke();
+
+        c.restore();
+      }
+
+      drawEnvironmentBackground(c) {
+        const bgGrad = c.createRadialGradient(V_WIDTH / 2, 70, 20, V_WIDTH / 2, 130, V_WIDTH * 0.75);
+        bgGrad.addColorStop(0, '#2e0e06');
+        bgGrad.addColorStop(0.5, '#160603');
+        bgGrad.addColorStop(1, '#060201');
+        c.fillStyle = bgGrad;
+        c.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+        // Canopy Stripes
+        c.save();
+        const stripes = 16;
+        const stripeW = V_WIDTH / stripes;
+        for (let i = 0; i < stripes; i++) {
+          c.beginPath();
+          c.moveTo(i * stripeW, 0);
+          c.lineTo((i + 1) * stripeW, 0);
+          c.lineTo((i + 0.5) * stripeW, 52);
+          c.closePath();
+          c.fillStyle = i % 2 === 0 ? 'rgba(185, 28, 28, 0.42)' : 'rgba(254, 243, 199, 0.18)';
+          c.fill();
+        }
+        c.restore();
+
+        // Fairground Wind Streamers
+        c.save();
+        const windTilt = this.crosswind * 4.2;
+        const streamerX = [180, 360, 540, 720];
+        streamerX.forEach((sx, idx) => {
+          c.beginPath();
+          c.moveTo(sx, 50);
+          c.quadraticCurveTo(sx + windTilt * 1.5, 75, sx + windTilt * 2.5, 95);
+          c.lineWidth = 3.0;
+          c.strokeStyle = idx % 2 === 0 ? 'rgba(244, 63, 94, 0.75)' : 'rgba(251, 191, 36, 0.75)';
+          c.stroke();
+        });
+        c.restore();
+
+        // Corridor Floor
+        const floorGrad = c.createLinearGradient(0, TABLE.floorY - 20, 0, V_HEIGHT);
+        floorGrad.addColorStop(0, '#150604');
+        floorGrad.addColorStop(0.4, '#0e0302');
+        floorGrad.addColorStop(1, '#050101');
+        c.fillStyle = floorGrad;
+        c.fillRect(0, TABLE.floorY - 20, V_WIDTH, V_HEIGHT - TABLE.floorY + 20);
+
+        // Grid lines
+        c.save();
+        c.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+        c.lineWidth = 1.4;
+        for (let y = TABLE.floorY; y < V_HEIGHT; y += 22) {
+          c.beginPath();
+          c.moveTo(0, y);
+          c.lineTo(V_WIDTH, y);
+          c.stroke();
+        }
+
+        const alleyVanishingX = V_WIDTH / 2;
+        const alleyVanishingY = TABLE.floorY;
+        const alleys = [-340, -190, -75, 75, 190, 340];
+        alleys.forEach(ax => {
+          c.beginPath();
+          c.moveTo(alleyVanishingX + (ax * 0.4), alleyVanishingY);
+          c.lineTo(alleyVanishingX + ax, V_HEIGHT);
+          c.stroke();
+        });
+        c.restore();
+
+        // Distant back legs
+        const legW = 20;
+        const backLegLeftX = TABLE.depthLeftX + 26;
+        const backLegRightX = TABLE.depthRightX - 26 - legW;
+
+        c.fillStyle = '#1e0a05';
+        c.fillRect(backLegLeftX, TABLE.depthTopY, legW * 0.8, TABLE.floorY - TABLE.depthTopY);
+        c.fillRect(backLegRightX, TABLE.depthTopY, legW * 0.8, TABLE.floorY - TABLE.depthTopY);
+      }
+
+      drawTabletop(c) {
+        const legW = 20;
+        const legLeftX = TABLE.leftX + 18;
+        const legRightX = TABLE.rightX - 18 - legW;
+
+        // Front Legs
+        [legLeftX, legRightX].forEach(lx => {
+          const legGrad = c.createLinearGradient(lx, 0, lx + legW, 0);
+          legGrad.addColorStop(0, '#4e2013');
+          legGrad.addColorStop(0.4, '#6b2d19');
+          legGrad.addColorStop(1, '#33120a');
+          c.fillStyle = legGrad;
+          c.fillRect(lx, TABLE.frontLipY, legW, TABLE.floorY - TABLE.frontLipY);
+        });
+
+        // Table Apron
+        const skirtGrad = c.createLinearGradient(0, TABLE.frontLipY, 0, TABLE.frontLipY + TABLE.skirtHeight);
+        skirtGrad.addColorStop(0, '#35130a');
+        skirtGrad.addColorStop(1, '#1b0704');
+        c.fillStyle = skirtGrad;
+        c.fillRect(TABLE.leftX + 6, TABLE.frontLipY, (TABLE.rightX - TABLE.leftX) - 12, TABLE.skirtHeight);
+
+        // Raised Tabletop Surface
+        c.save();
+        c.beginPath();
+        c.moveTo(TABLE.leftX, TABLE.surfaceY);
+        c.lineTo(TABLE.depthLeftX, TABLE.depthTopY);
+        c.lineTo(TABLE.depthRightX, TABLE.depthTopY);
+        c.lineTo(TABLE.rightX, TABLE.surfaceY);
+        c.closePath();
+
+        const tableTopGrad = c.createLinearGradient(0, TABLE.depthTopY, 0, TABLE.surfaceY);
+        tableTopGrad.addColorStop(0.0, '#4a1e11');
+        tableTopGrad.addColorStop(0.5, '#622916');
+        tableTopGrad.addColorStop(1.0, '#863a1f');
+        c.fillStyle = tableTopGrad;
+        c.fill();
+
+        // Wooden planks
+        c.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+        c.lineWidth = 1.4;
+        const planks = 5;
+        for (let i = 1; i < planks; i++) {
+          const ratio = i / planks;
+          const pxFront = TABLE.leftX + (TABLE.rightX - TABLE.leftX) * ratio;
+          const pxBack = TABLE.depthLeftX + (TABLE.depthRightX - TABLE.depthLeftX) * ratio;
+          c.beginPath();
+          c.moveTo(pxBack, TABLE.depthTopY);
+          c.lineTo(pxFront, TABLE.surfaceY);
+          c.stroke();
+        }
+
+        c.strokeStyle = 'rgba(251, 191, 36, 0.35)';
+        c.lineWidth = 1.6;
+        c.stroke();
+
+        // Bevel Edge
+        const lipGrad = c.createLinearGradient(0, TABLE.surfaceY, 0, TABLE.frontLipY);
+        lipGrad.addColorStop(0.0, '#a14707');
+        lipGrad.addColorStop(0.3, '#ea580c');
+        lipGrad.addColorStop(1.0, '#6c2d0b');
+        c.fillStyle = lipGrad;
+        c.fillRect(TABLE.leftX, TABLE.surfaceY, TABLE.rightX - TABLE.leftX, TABLE.frontLipY - TABLE.surfaceY);
+
+        c.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        c.lineWidth = 1.8;
+        c.beginPath();
+        c.moveTo(TABLE.leftX, TABLE.surfaceY);
+        c.lineTo(TABLE.rightX, TABLE.surfaceY);
+        c.stroke();
+
+        c.restore();
+      }
+
+      bindEvents() {
+        restartBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.reset();
+        });
+
+        modalPlayAgainBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.reset();
+        });
+
+        soundToggleBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          sound.init();
+          const muted = sound.toggleMute();
+          soundToggleBtn.textContent = muted ? '🔇' : '🔊';
+          soundToggleBtn.classList.toggle('text-rose-400', muted);
+        });
+
+        const getCanvasPos = (clientX, clientY) => {
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = V_WIDTH / rect.width;
+          const scaleY = V_HEIGHT / rect.height;
+          return {
+            x: Math.max(0, Math.min(V_WIDTH, (clientX - rect.left) * scaleX)),
+            y: Math.max(0, Math.min(V_HEIGHT, (clientY - rect.top) * scaleY)),
+          };
+        };
+
+        let activeTouchId = null;
+
+        const onStart = (clientX, clientY) => {
+          if (this.ball.inFlight || this.isGameOver || this.ballsRemaining <= 0 || this.hand.state !== 'idle') return false;
+          sound.init();
+          
+          const p = getCanvasPos(clientX, clientY);
+          this.isDragging = true;
+          this.dragStartX = p.x;
+          this.dragStartY = p.y;
+          this.dragCurrX = p.x;
+          this.dragCurrY = p.y;
+          this.dragPullRatio = 0;
+          return true;
+        };
+
+        const onMove = (clientX, clientY) => {
+          if (!this.isDragging) return;
+          const p = getCanvasPos(clientX, clientY);
+          this.dragCurrX = p.x;
+          this.dragCurrY = p.y;
+
+          // Inverted slingshot calculation
+          const dx = this.dragCurrX - this.dragStartX;
+          const dy = this.dragCurrY - this.dragStartY;
+          const pullDist = Math.hypot(dx, dy);
+
+          const maxPullDistance = 140;
+          this.dragPullRatio = Math.min(1.0, Math.max(0.0, pullDist / maxPullDistance));
+          this.throwPower = Math.round(this.dragPullRatio * 100);
+
+          if (pullDist > 5) {
+            const steerX = -dx;
+            const targetAngle = (steerX / 100) * 24;
+            this.aimAngle = Math.max(-24, Math.min(24, Math.round(targetAngle * 10) / 10));
+          } else {
+            this.throwPower = 0;
+            this.aimAngle = 0;
+          }
+        };
+
+        const onEnd = () => {
+          if (!this.isDragging) return;
+          this.isDragging = false;
+
+          const dx = this.dragCurrX - this.dragStartX;
+          const dy = this.dragCurrY - this.dragStartY;
+          const pullDist = Math.hypot(dx, dy);
+
+          if (this.throwPower >= 15 && pullDist >= 18) {
+            this.triggerHandThrow();
+          } else {
+            this.throwPower = 0;
+            this.aimAngle = 0;
+            this.dragPullRatio = 0;
+          }
+        };
+
+        // Touch event listeners
+        canvas.addEventListener('touchstart', (e) => {
+          if (e.cancelable) e.preventDefault();
+          if (activeTouchId !== null) return;
+          const touch = e.changedTouches[0];
+          activeTouchId = touch.identifier;
+          onStart(touch.clientX, touch.clientY);
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+          if (!this.isDragging || activeTouchId === null) return;
+          if (e.cancelable) e.preventDefault();
+          for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            if (touch.identifier === activeTouchId) {
+              onMove(touch.clientX, touch.clientY);
+              break;
+            }
+          }
+        }, { passive: false });
+
+        const handleTouchEnd = (e) => {
+          if (activeTouchId === null) return;
+          for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === activeTouchId) {
+              if (e.cancelable) e.preventDefault();
+              activeTouchId = null;
+              onEnd();
+              break;
+            }
+          }
+        };
+
+        window.addEventListener('touchend', handleTouchEnd, { passive: false });
+        window.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
+        // Mouse / Pointer fallback
+        canvas.addEventListener('pointerdown', (e) => {
+          if (e.pointerType === 'touch') return;
+          e.preventDefault();
+          onStart(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('pointermove', (e) => {
+          if (e.pointerType === 'touch') return;
+          if (!this.isDragging) return;
+          e.preventDefault();
+          onMove(e.clientX, e.clientY);
+        });
+
+        const handlePointerEnd = (e) => {
+          if (e.pointerType === 'touch') return;
+          if (!this.isDragging) return;
+          e.preventDefault();
+          onEnd();
+        };
+
+        window.addEventListener('pointerup', handlePointerEnd);
+        window.addEventListener('pointercancel', handlePointerEnd);
+      }
+
+      update(now) {
+        const dt = Math.min(0.045, (now - this.lastTimestamp) / 1000);
+        this.lastTimestamp = now;
+
+        if (this.screenShakeTime > 0) {
+          this.screenShakeTime -= dt;
+        }
+
+        this.hand.update(dt, this.aimAngle, this.isDragging, this.dragPullRatio);
+        this.ball.update(dt);
+
+        for (let g of this.glasses) {
+          g.update(dt);
+        }
+
+        for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+          const sw = this.shockwaves[i];
+          sw.update(dt);
+          if (sw.alpha <= 0.01) {
+            this.shockwaves.splice(i, 1);
+          }
+        }
+
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.update(dt);
+          if (p.alpha <= 0.01) {
+            this.particles.splice(i, 1);
+          }
+        }
+
+        this.handleCollisionsAndRules();
+      }
+
+      render() {
+        ctx.save();
+        ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
+
+        if (this.screenShakeTime > 0) {
+          const shakeFactor = this.screenShakeTime * this.screenShakeIntensity * 1.5;
+          const shakeX = (Math.random() - 0.5) * shakeFactor;
+          const shakeY = (Math.random() - 0.5) * shakeFactor;
+          ctx.translate(shakeX, shakeY);
+        }
+
+        // 1. Background
+        this.drawEnvironmentBackground(ctx);
+
+        // 2. Glasses falling behind table
+        for (let g of this.glasses) {
+          if (g.fellOffBack) {
+            g.draw(ctx);
+          }
+        }
+
+        // 3. Wooden Tabletop
+        this.drawTabletop(ctx);
+
+        // 4. Aim Trajectory Guide
+        this.drawAimGuide(ctx);
+
+        // 5. Glasses on table / front
+        for (let g of this.glasses) {
+          if (!g.fellOffBack) {
+            g.draw(ctx);
+          }
+        }
+
+        // 6. Shockwaves
+        for (let sw of this.shockwaves) {
+          sw.draw(ctx);
+        }
+
+        // 7. Projectile Ball
+        if (this.ball.inFlight) {
+          this.ball.draw(ctx);
+        }
+
+        // 8. Particles
+        for (let p of this.particles) {
+          p.draw(ctx);
+        }
+
+        // 9. Elastic Slingshot Line
+        this.drawSlingshotPullLine(ctx);
+
+        // 10. Player's Throwing Arm & Hand
+        this.hand.draw(ctx, this.ball.inFlight, this.ballsRemaining);
+
+        ctx.restore();
+      }
+
+      start() {
+        const loop = (timestamp) => {
+          this.update(timestamp);
+          this.render();
+          requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+      }
+    }
+
+    window.onload = () => {
+      resizeCanvas();
+      const game = new GameController();
+      game.start();
+    };
+  </script>
+</body>
+</html>
